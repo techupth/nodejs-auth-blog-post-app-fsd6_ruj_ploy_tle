@@ -1,28 +1,55 @@
 import axios from "axios";
 
 function jwtInterceptor() {
-  axios.interceptors.request.use((req) => {
-    // 🐨 Todo: Exercise #6
-    //  ให้เขียน Logic ในการแนบ Token เข้าไปใน Header ของ Request
-    // เมื่อมีการส่ง Request จาก Client ไปหา Server
-    // ภายใน Callback Function axios.interceptors.request.use
-
-    return req;
-  });
-
-  axios.interceptors.response.use(
+  // Interceptor สำหรับ request
+  axios.interceptors.request.use(
     (req) => {
+      // ดึง JWT token จาก Local Storage
+      const token = localStorage.getItem('jwtToken');
+
+      // ถ้ามี token ให้แนบไปกับ header ของ request
+      if (token) {
+        req.headers.Authorization = `Bearer ${token}`;
+      }
+
       return req;
     },
     (error) => {
-      // 🐨 Todo: Exercise #6
-      //  ให้เขียน Logic ในการรองรับเมื่อ Server ได้ Response กลับมาเป็น Error
-      // โดยการ Redirect ผู้ใช้งานไปที่หน้า Login และลบ Token ออกจาก Local Storage
-      // ภายใน Error Callback Function ของ axios.interceptors.response.use
+      // จัดการกับ error ที่เกิดขึ้นใน request
+      return Promise.reject(error);
+    }
+  );
+
+  // Interceptor สำหรับ response
+  axios.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    (error) => {
+      // ถ้า response error และมีสถานะเป็น 401 Unauthorized
+      if (error.response && error.response.status === 401) {
+        // ลบ JWT token จาก Local Storage
+        localStorage.removeItem('jwtToken');
+
+        // Redirect ผู้ใช้ไปยังหน้า login
+        window.location.href = '/login';
+      }
 
       return Promise.reject(error);
     }
   );
 }
 
-export default jwtInterceptor;
+// เรียกใช้ฟังก์ชัน jwtInterceptor เพื่อ setup interceptor
+jwtInterceptor();
+
+// Usage example: Sending a request using axios
+axios.get('https://localhost:4000/protected-route')
+  .then(response => {
+    console.log('Response:', response.data);
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+
+export default jwtInterceptor;//ทบทวน
