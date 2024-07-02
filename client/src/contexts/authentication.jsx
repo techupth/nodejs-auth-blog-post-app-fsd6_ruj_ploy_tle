@@ -23,7 +23,7 @@ function AuthProvider(props) {
     const result = await axios.post("http://localhost:4000/auth/login", data);
     const token = result.data.token;
     localStorage.setItem("token", token);
-    const userDataFromToken = jwtDecode();
+    const userDataFromToken = jwtDecode(token);
     setState({ ...state, user: userDataFromToken });
     navigate("/");
   };
@@ -37,6 +37,8 @@ function AuthProvider(props) {
     // 🐨 Todo: Exercise #7
     //  ให้เขียน Logic ของ Function `logout` ตรงนี้
     //  Function logout ทำหน้าที่ในการลบ JWT Token ออกจาก Local Storage
+    localStorage.removeItem("token");
+    setState({ ...state, user: null });
   };
 
   const isAuthenticated = Boolean(localStorage.getItem("token"));
